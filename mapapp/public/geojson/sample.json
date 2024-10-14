@@ -1,0 +1,44 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [139.6917, 35.6895]
+      },
+      "properties": {
+        "name": "Tokyo",
+        "postalCode": "100-0001",
+        "population": 13929286,
+        "registrationDate": "2024-01-01"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [135.5023, 34.6937]
+      },
+      "properties": {
+        "name": "Osaka",
+        "postalCode": "530-0001",
+        "population": 2711535,
+        "registrationDate": "2023-10-01"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [130.4181, 33.6064]
+      },
+      "properties": {
+        "name": "Fukuoka",
+        "postalCode": "810-0001",
+        "population": 1617428,
+        "registrationDate": "2023-10-01"
+      }
+    }
+  ]
+}
