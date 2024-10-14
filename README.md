@@ -14,6 +14,7 @@ url https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-N03-2024.html#prefecture0
 市区町村のshapeファイル。SQLファイルに変換してテーブルを作成する
 
 ※shapeファイルのsqlファイルへの変換
+
 shp2pgsql -s 4612 -D -i -I N03-20240101.shp shape_municipality > N03-20240101.sql
 
 ## テーブル作成
