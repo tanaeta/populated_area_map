@@ -1,5 +1,5 @@
 import React, { useEffect, useState} from 'react';
-import { MapContainer, TileLayer, LayersControl, GeoJSON, useMap, Marker, Popup,Polygon, FeatureGroup,Pane } from 'react-leaflet';
+import { MapContainer, TileLayer, LayersControl, GeoJSON, useMap, Marker, Popup,Polygon, FeatureGroup,Pane,Polyline } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet-draw/dist/leaflet.draw.css';
 import moment from 'moment';
@@ -13,6 +13,7 @@ const MapComponent = ({selectedPrefectures,minPopulation,setMinPopulation,dateRa
   const [chiba, setChiba] = useState(null);
   const [averageArea, setAverageArea] = useState(0);
   const [municipalityPolygons, setMunicipalityPolygons] = useState([]);
+  const [roads, setRoads] = useState([]);
 
   useEffect(() => {
     const jsonload = () =>{
@@ -39,6 +40,33 @@ const MapComponent = ({selectedPrefectures,minPopulation,setMinPopulation,dateRa
 
     jsonload();
     chibaJsonload();
+  }, []);
+
+  useEffect(() => {
+    // Overpass APIを使ってOpenStreetMapの道路データを取得する
+    const getRoadsData = async () => {
+      try {
+        const boundingBoxSize = 0.05;
+        const response = await fetch('https://overpass-api.de/api/interpreter', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+          },
+          body: new URLSearchParams({
+            data: `[out:json];way["highway"~"^(primary|trunk)$"](${position[0] - boundingBoxSize},${position[1] - boundingBoxSize},${position[0] + boundingBoxSize},${position[1] + boundingBoxSize});out geom;`
+          })
+        });
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        const roadsData = data.elements.map(way => way.geometry.map(point => [point.lat, point.lon]));
+        setRoads(roadsData);
+      } catch (error) {
+        console.error("Error fetching roads data:", error);
+      }
+    };
+    getRoadsData();
   }, []);
 
   return (
@@ -138,6 +166,26 @@ const MapComponent = ({selectedPrefectures,minPopulation,setMinPopulation,dateRa
                     });
                   }}
                 />
+            </LayersControl.Overlay>
+
+            {/** 線路情報表示 */}
+            <LayersControl.Overlay id="ORM" name="OpenRailMap">
+              <TileLayer
+                //OpenRailMapの地図タイルをオーバーレイとして使用
+                url="https://{s}.tiles.openrailwaymap.org/standard/{z}/{x}/{y}.png"
+                attribution='&copy; <a href="https://www.openrailwaymap.org/">OpenRailwayMap</a> contributors'
+              />
+            </LayersControl.Overlay>
+
+            {/** 道路情報表示 */}
+            <LayersControl.Overlay id="Road" name="Road">
+              <FeatureGroup>
+                {roads && roads.map((road, index) => {
+                  if (road.length > 1) { // ポイント数がある程度のポリラインのみ表示
+                    return(<Polyline positions={road} pathOptions={{ color: 'purple'}} />);
+                  }
+                })}
+              </FeatureGroup>
             </LayersControl.Overlay>
 
             {/** 市区町村ポリゴン */}
