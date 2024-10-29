@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Polygon, Popup } from 'react-leaflet';
+import { Polygon, Popup, Pane } from 'react-leaflet';
 import axios from 'axios';
 
 const transformCoordinates = (coords) => {
@@ -58,12 +58,14 @@ const MunicipalityPolygon = ({selectedPrefectures}) => {
             pathOptions={{color}}
             positions={transformCoordinates(municipality.geojson.coordinates)}
           >
-            <Popup>
-              {municipalityName || 'No name'}<br />
-              総人口: {municipality.totalPopulation || 'No population'}<br />
-              15歳以下: {municipality.populationUnder15 || 'No population'}<br />
-              割合: {percentage.toFixed(2)}%
-            </Popup>
+            <Pane name={municipalityName+index} style={{zIndex: 600}} >
+              <Popup>
+                {municipalityName || 'No name'}<br />
+                総人口: {municipality.totalPopulation || 'No population'}<br />
+                15歳以下: {municipality.populationUnder15 || 'No population'}<br />
+                割合: {percentage.toFixed(2)}%
+              </Popup>
+            </Pane>
           </Polygon>
         )
       })}

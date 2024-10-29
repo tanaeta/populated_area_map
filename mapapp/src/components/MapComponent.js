@@ -1,5 +1,5 @@
 import React, { useEffect, useState} from 'react';
-import { MapContainer, TileLayer, LayersControl, GeoJSON, useMap, Marker, Popup,Polygon, FeatureGroup } from 'react-leaflet';
+import { MapContainer, TileLayer, LayersControl, GeoJSON, useMap, Marker, Popup,Polygon, FeatureGroup,Pane } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet-draw/dist/leaflet.draw.css';
 import moment from 'moment';
@@ -142,11 +142,16 @@ const MapComponent = ({selectedPrefectures,minPopulation,setMinPopulation,dateRa
 
             {/** 市区町村ポリゴン */}
             <LayersControl.Overlay checked name="市区町村ポリゴン">
-              <FeatureGroup>
-                <MunicipalityPolygon
-                  selectedPrefectures={selectedPrefectures}
-                />
-              </FeatureGroup>
+              <Pane 
+                name="municipality-polygon" 
+                style={{zIndex: 400}}
+              >
+                <FeatureGroup>
+                  <MunicipalityPolygon
+                    selectedPrefectures={selectedPrefectures}
+                  />
+                </FeatureGroup>
+              </Pane>
             </LayersControl.Overlay>
           </LayersControl>
         }
