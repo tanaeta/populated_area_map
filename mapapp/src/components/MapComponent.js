@@ -6,6 +6,22 @@ import moment from 'moment';
 import 'rc-slider/assets/index.css';
 import 'leaflet.heat';
 import MunicipalityPolygon from './MunicipalityPolygon.js';
+import SampleChibaComponents from './SampleChibaComponents.js';
+import DepartmentStoresComponent from './DepartmentStoresComponent.js';
+import PostOfficesComponent from './PostOfficesComponent.js';
+import L from 'leaflet'
+import icon from "../assets/icon/marker-icon.png";
+import iconShadow from "../assets/icon/marker-shadow.png";
+
+// marker setting
+let DefaultIcon = L.icon({
+  iconUrl: icon,
+  shadowUrl: iconShadow,
+  iconSize: [25, 41],
+  iconAnchor: [12.5, 20.5],
+  popupAnchor: [0, -20.5],
+});
+L.Marker.prototype.options.icon = DefaultIcon;
 
 const MapComponent = ({selectedPrefectures,minPopulation,setMinPopulation,dateRange,setDateRange,customDate,setCustomDate,customDateRange,setCustomDateRange}) => {
   const position = [35.6895, 139.6917]; 
@@ -14,6 +30,9 @@ const MapComponent = ({selectedPrefectures,minPopulation,setMinPopulation,dateRa
   const [averageArea, setAverageArea] = useState(0);
   const [municipalityPolygons, setMunicipalityPolygons] = useState([]);
   const [roads, setRoads] = useState([]);
+  const [departmentStores, setDepartmentStores] = useState([]);
+  const [selectedDepartmentStores, setSelectedDepartmentStores] = useState([]);
+  const [postOffices, setPostOffices] = useState([]);
 
   useEffect(() => {
     const jsonload = () =>{
@@ -66,6 +85,36 @@ const MapComponent = ({selectedPrefectures,minPopulation,setMinPopulation,dateRa
         console.error("Error fetching roads data:", error);
       }
     };
+
+    const getDepartmentStoresData = async () => {
+      try {
+        const response = await fetch('http://localhost:3001/api/department_stores');
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        setDepartmentStores(data);
+        console.log(data);
+      } catch (error) {
+        console.error("Error fetching DepartmentStores data:", error);
+      }
+    };
+
+    const getPostOfficesData = async () => {
+      try {
+        const response = await fetch('http://localhost:3001/api/post_offices');
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        setPostOffices(data);
+        console.log("post_offices",data);
+      } catch (error) {
+        console.error("Error fetching PostOffices data:", error);
+      }
+    };
+    getPostOfficesData();
+    getDepartmentStoresData();
     getRoadsData();
   }, []);
 
@@ -80,93 +129,33 @@ const MapComponent = ({selectedPrefectures,minPopulation,setMinPopulation,dateRa
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
 
-        {chiba && 
-          <LayersControl position="topright">
-            <LayersControl.Overlay id="chiba" name="Chiba" >
-                <GeoJSON
-                  data={chiba}
-                  style={(feature) => {
-                    const area = feature.properties.JINKO || 0;
-                    let fillColor = 'green';
-                    if (area > 1000000) fillColor = 'red';
-                    else if (area > 500000) fillColor = 'orange';
-                    else if (area > 100000) fillColor = 'yellow';
-                      return {
-                        fillColor,
-                        weight: 2,
-                        opacity: 1,
-                        color: 'white',
-                        dashArray: '3',
-                        fillOpacity: 0.7
-                      };
-                    }}
-                    onEachFeature={(feature, layer) => {
-                      layer.on({
-                      click: () => {
-                        layer.bindPopup(`人口: ${feature.properties.JINKO || 'No data'}<br>${feature.properties.PREF_NAME + feature.properties.CITY_NAME + feature.properties.S_NAME || 'No data'}`).openPopup();
-                      }
-                      });
-                    }}
-                    />
-            </LayersControl.Overlay>
+      <LayersControl position="topright">
 
-            <LayersControl.Overlay id="chibaaa" name="Chiba - Average Area">
-              <GeoJSON
-                data={chiba}
-                style={(feature) => {
-                  const area = feature.properties.JINKO || 0;
-                  let fillColor = 'green';
-                  if (area > averageArea * 2) fillColor = 'red';
-                  else if (area > averageArea) fillColor = 'orange';
-                  else if (area > averageArea / 2) fillColor = 'yellow';
-                  return {
-                    fillColor,
-                    weight: 2,
-                    opacity: 1,
-                    color: 'white',
-                    dashArray: '3',
-                    fillOpacity: 0.7
-                  };
-                }}
-                onEachFeature={(feature, layer) => {
-                  layer.on({
-                  click: () => {
-                    layer.bindPopup(`人口: ${feature.properties.JINKO || 'No data'}<br>${feature.properties.PREF_NAME + feature.properties.CITY_NAME + feature.properties.S_NAME || 'No data'}`).openPopup();
-                  }
-                  });
-                }}
-              />
-            </LayersControl.Overlay>
+            {/** 商業施設 */}
+            {departmentStores &&
+              <LayersControl.Overlay  name="商業施設">
+                <DepartmentStoresComponent departmentStores={departmentStores} setSelectedDepartmentStores={setSelectedDepartmentStores} />
+              </LayersControl.Overlay>
+            }
 
-            <LayersControl.Overlay id="chibaapr" name="Chiba - Area to Population Ratio">
-                <GeoJSON
-                  data={chiba}
-                  style={(feature) => {
-                    const area = feature.properties.AREA || 1; // AREAが0の場合を避けるために1をデフォルト値とする
-                    const population = feature.properties.JINKO || 0;
-                    const ratio = population / area;
-                    let fillColor = 'green';
-                    if (ratio > 0.1) fillColor = 'red';
-                    else if (ratio > 0.01) fillColor = 'orange';
-                    else if (ratio > 0.001) fillColor = 'yellow';
-                    return {
-                      fillColor,
-                      weight: 2,
-                      opacity: 1,
-                      color: 'white',
-                      dashArray: '3',
-                      fillOpacity: 0.7
-                    };
-                  }}
-                  onEachFeature={(feature, layer) => {
-                    layer.on({
-                      click: () => {
-                        layer.bindPopup(`人口: ${feature.properties.JINKO || 'No data'}<br>面積: ${feature.properties.AREA || 'No data'}<br>割合: ${(feature.properties.JINKO / feature.properties.AREA).toFixed(2) || 'No data'}<br>${feature.properties.PREF_NAME + feature.properties.CITY_NAME + feature.properties.S_NAME || 'No data'}`).openPopup();
-                      }
-                    });
-                  }}
-                />
-            </LayersControl.Overlay>
+            {/** 郵便局 */}
+            {postOffices &&
+              <LayersControl.Overlay  name="郵便局">
+                {selectedDepartmentStores.length > 0?
+                  // 選択された商業施設と同じcodeを持つ郵便局のみ表示
+                  <PostOfficesComponent postOffices={
+                    postOffices.filter(
+                      postOffice => postOffice.code === selectedDepartmentStores[0].code
+                    )
+                  } />
+                  :
+                  <PostOfficesComponent postOffices={postOffices} />
+                }
+              </LayersControl.Overlay>
+            }
+
+            {/** サンプルコンポーネント表示 */}
+            <SampleChibaComponents chiba={chiba} averageArea={averageArea} />
 
             {/** 線路情報表示 */}
             <LayersControl.Overlay id="ORM" name="OpenRailMap">
@@ -201,8 +190,7 @@ const MapComponent = ({selectedPrefectures,minPopulation,setMinPopulation,dateRa
                 </FeatureGroup>
               </Pane>
             </LayersControl.Overlay>
-          </LayersControl>
-        }
+        </LayersControl>
 
         {/** geojsonをロードしてMarkerとして表示 */}
         {geojsonData && geojsonData.features.map((feature, index) => {
